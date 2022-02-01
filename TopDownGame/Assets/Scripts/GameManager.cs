@@ -5,17 +5,26 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    [SerializeField] GameObject player;
+
     [Header("대화창")]
-    [SerializeField] Text talkText;
+    [Space(15f)]
+    [SerializeField] TypeEffect talkText;
     [SerializeField] GameObject talkBox;
     [SerializeField] Image portrait;
-    GameObject curObject;
-    ObjData obj;
-    string tempTalk;
+    GameObject scanObject;
+    [SerializeField] Animator talkBoxAnim;
+    [SerializeField] Animator portraitAnim;
+    Sprite prevSprite;
     bool isAction;
     int talkIndex;
     Color alphaZero;
     Color alphaOne;
+
+    [Header("메뉴창")]
+    [Space(15f)]
+    [SerializeField] GameObject menuSet;
+    [SerializeField] Text questText;
 
     [Header("매니저")][Space(15f)]
     [SerializeField] TalkManager talkManager;
@@ -25,68 +34,106 @@ public class GameManager : MonoBehaviour
     {
         alphaZero = new Color(1, 1, 1, 0);
         alphaOne = new Color(1, 1, 1, 1);
+
+        GameLoad();
+
+        questText.text = questManager.CheckQuest();
     }
 
-    public void Action(GameObject scanObject)
+    void Update()
     {
-        curObject = scanObject;
-        Talk();
-    }
-
-    public void Talk()
-    {
-        if (!isAction)
+        if (Input.GetButtonDown("Cancel"))
         {
-            isAction = true;
-            talkBox.SetActive(true);
-            obj = curObject.GetComponent<ObjData>();
+            if (menuSet.activeSelf) menuSet.SetActive(false);
+            else menuSet.SetActive(true);
         }
-        
-        if (obj.isNPC)
+    }
+
+    public void Action(GameObject scanObj)
+    {
+        scanObject = scanObj;
+        ObjData objData = scanObject.GetComponent<ObjData>();
+        Talk(objData.id, objData.isNPC);
+
+        talkBoxAnim.SetBool("isShow", isAction);
+    }
+
+    public void Talk(int id, bool isNPC)
+    {
+        int questTalkIndex = 0;
+        string talkData = "";
+
+        if (talkText.isAnim)
         {
-            int questTalkIndex = questManager.GetQuestTalkIndex(obj.id);
-            string tTalk = talkManager.GetTalk(obj.id + questTalkIndex, talkIndex);
-            tempTalk = tTalk.Split(':')[0];
-            if (tempTalk == null)
+            talkText.SetMsg("");
+            return;
+        }
+        else
+        {
+            //set data
+            questTalkIndex = questManager.GetQuestTalkIndex(id);
+            talkData = talkManager.GetTalk(id + questTalkIndex, talkIndex);
+        }
+
+        //end talk
+        if (talkData == null)
+        {
+            isAction = false;
+            talkIndex = 0; //대화가 다 끝나면 대화초기화
+            questText.text = questManager.CheckQuest(id);
+            return;
+        }
+
+        if (isNPC)
+        {
+            //show portrait
+            talkText.SetMsg(talkData.Split(':')[0]);
+            portrait.sprite = talkManager.GetProtrait(id, int.Parse(talkData.Split(':')[1]));
+            portrait.color = alphaOne;
+            //portrait animation
+            if (prevSprite != portrait.sprite)
             {
-                questManager.CheckQuest(obj.id);
-                talkBox.SetActive(false);
-                isAction = false;
-                obj = null;
-                tempTalk = null;
-                curObject = null;
-                talkIndex = 0;
-            }
-            else
-            {
-                talkText.text = tempTalk;
-                portrait.color = alphaOne;
-                int portraitIndex = int.Parse(tTalk.Split(':')[1]);
-                portrait.sprite = talkManager.GetProtrait(obj.id, talkIndex);
-                talkIndex++;
+                portraitAnim.SetTrigger("doEffect");
+                prevSprite = portrait.sprite;
             }
         }
         else
         {
-            int questTalkIndex = 0;
-            tempTalk = talkManager.GetTalk(obj.id + questTalkIndex, talkIndex);
-            if (tempTalk == null)
-            {
-                talkBox.SetActive(false);
-                isAction = false;
-                obj = null;
-                tempTalk = null;
-                curObject = null;
-                talkIndex = 0;
-            }
-            else
-            {
-                talkText.text = tempTalk;
-                portrait.color = alphaZero;
-                talkIndex++;
-            }
+            talkText.SetMsg(talkData);
+            portrait.color = alphaZero;
         }
+
+        isAction = true;
+        talkIndex++;
     }
 
     public bool IsAction() => isAction;
+
+    public void GameSave()
+    {
+        PlayerPrefs.SetFloat("PlayerX", player.transform.position.x);
+        PlayerPrefs.SetFloat("PlayerY", player.transform.position.y);
+        PlayerPrefs.SetInt("QuestID", questManager.questID);
+        PlayerPrefs.SetInt("QuestActionIndex", questManager.questActionIndex);
+
+        PlayerPrefs.Save();
+        menuSet.SetActive(false);
+    }
+
+    public void GameLoad()
+    {
+        float x = PlayerPrefs.GetFloat("PlayerX");
+        float y = PlayerPrefs.GetFloat("PlayerY");
+        int questID = PlayerPrefs.GetInt("QuestID");
+        int questActionIndex = PlayerPrefs.GetInt("QuestActionIndex");
+
+        player.transform.position = new Vector3(x,y,0);
+        questManager.questID = questID;
+        questManager.questActionIndex = questActionIndex;
+    }
+
+    public void GameExit()
+    {
+        Application.Quit();
+    }
 }

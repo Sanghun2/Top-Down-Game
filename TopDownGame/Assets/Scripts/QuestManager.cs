@@ -6,6 +6,7 @@ public class QuestManager : MonoBehaviour
 {
     public int questID;
     public int questActionIndex;
+    public GameObject[] questObject;
     Dictionary<int, QuestData> questList = new Dictionary<int, QuestData>();
 
     void Awake()
@@ -17,6 +18,10 @@ public class QuestManager : MonoBehaviour
     {
         questList.Add(10, new QuestData("첫 마을 방문", 
             new int[] {2000, 1000}));
+        questList.Add(20, new QuestData("열쇠 찾기",
+            new int[] {500, 1000}));
+        questList.Add(30, new QuestData("마을 탈출",
+            new int[] { 10000 }));
     }
 
     public int GetQuestTalkIndex(int id)
@@ -30,6 +35,9 @@ public class QuestManager : MonoBehaviour
         {
             questActionIndex++;
         }
+
+        ControlObject();
+        
         //모든 퀘스트가 완료되면 실행되는 로직
         if (questActionIndex == questList[questID].npcID.Length)
         {
@@ -39,9 +47,32 @@ public class QuestManager : MonoBehaviour
         return questList[questID].questName;
     }
 
+    public string CheckQuest()
+    {
+        return questList[questID].questName;
+    }
+
     void NextQuest()
     {
-        questID += 10;
+        if (questID < 30)
+        {
+            questID += 10;
+        }
         questActionIndex = 0;
+    }
+
+    void ControlObject()
+    {
+        switch (questID)
+        {
+            case 20:
+                if (questActionIndex == 1)
+                {
+                    questObject[0].SetActive(false);
+                }
+                break;
+            default:
+                break;
+        }
     }
 }
