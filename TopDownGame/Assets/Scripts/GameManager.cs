@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    [Header("대화창")]
     [SerializeField] Text talkText;
     [SerializeField] GameObject talkBox;
     [SerializeField] Image portrait;
@@ -13,11 +14,12 @@ public class GameManager : MonoBehaviour
     string tempTalk;
     bool isAction;
     int talkIndex;
-
     Color alphaZero;
     Color alphaOne;
 
+    [Header("매니저")][Space(15f)]
     [SerializeField] TalkManager talkManager;
+    [SerializeField] QuestManager questManager;
 
     void Start()
     {
@@ -39,11 +41,15 @@ public class GameManager : MonoBehaviour
             talkBox.SetActive(true);
             obj = curObject.GetComponent<ObjData>();
         }
-        tempTalk = talkManager.GetTalk(obj.id, talkIndex);
+        
         if (obj.isNPC)
         {
+            int questTalkIndex = questManager.GetQuestTalkIndex(obj.id);
+            string tTalk = talkManager.GetTalk(obj.id + questTalkIndex, talkIndex);
+            tempTalk = tTalk.Split(':')[0];
             if (tempTalk == null)
             {
+                questManager.CheckQuest(obj.id);
                 talkBox.SetActive(false);
                 isAction = false;
                 obj = null;
@@ -55,12 +61,15 @@ public class GameManager : MonoBehaviour
             {
                 talkText.text = tempTalk;
                 portrait.color = alphaOne;
+                int portraitIndex = int.Parse(tTalk.Split(':')[1]);
                 portrait.sprite = talkManager.GetProtrait(obj.id, talkIndex);
                 talkIndex++;
             }
         }
         else
         {
+            int questTalkIndex = 0;
+            tempTalk = talkManager.GetTalk(obj.id + questTalkIndex, talkIndex);
             if (tempTalk == null)
             {
                 talkBox.SetActive(false);
