@@ -61,18 +61,18 @@ public class QuestManager : MonoBehaviour
         questActionIndex = 0;
     }
 
-    void ControlObject()
+    public void ControlObject()
     {
-        switch (questID)
+        if (questID == 20)
         {
-            case 20:
-                if (questActionIndex == 1)
-                {
-                    questObject[0].SetActive(false);
-                }
-                break;
-            default:
-                break;
+            if (questActionIndex == 1)
+            {
+                questObject[0].SetActive(false);
+            }
+        }
+        else if (questID > 20)
+        {
+            questObject[0].SetActive(false);
         }
     }
 }

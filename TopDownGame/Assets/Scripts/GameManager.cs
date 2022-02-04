@@ -44,9 +44,14 @@ public class GameManager : MonoBehaviour
     {
         if (Input.GetButtonDown("Cancel"))
         {
-            if (menuSet.activeSelf) menuSet.SetActive(false);
-            else menuSet.SetActive(true);
+            SubMenuActive();
         }
+    }
+
+    public void SubMenuActive()
+    {
+        if (menuSet.activeSelf) menuSet.SetActive(false);
+        else menuSet.SetActive(true);
     }
 
     public void Action(GameObject scanObj)
@@ -115,13 +120,14 @@ public class GameManager : MonoBehaviour
         PlayerPrefs.SetFloat("PlayerY", player.transform.position.y);
         PlayerPrefs.SetInt("QuestID", questManager.questID);
         PlayerPrefs.SetInt("QuestActionIndex", questManager.questActionIndex);
-
         PlayerPrefs.Save();
         menuSet.SetActive(false);
     }
 
     public void GameLoad()
     {
+        if (!PlayerPrefs.HasKey("PlayerX")) return;
+
         float x = PlayerPrefs.GetFloat("PlayerX");
         float y = PlayerPrefs.GetFloat("PlayerY");
         int questID = PlayerPrefs.GetInt("QuestID");
@@ -130,6 +136,8 @@ public class GameManager : MonoBehaviour
         player.transform.position = new Vector3(x,y,0);
         questManager.questID = questID;
         questManager.questActionIndex = questActionIndex;
+
+        questManager.ControlObject();
     }
 
     public void GameExit()
